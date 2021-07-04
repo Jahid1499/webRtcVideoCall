@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MyVideo</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <style>
+        video{
+            width: 100%;
+        }
+        #myVideo{
+            height: 400px;
+        }
+        #otherVideo{
+            height: 600px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row text-center my-4">
+        <h3 class="text-white bg-success py-4">Welcome to video Call</h3>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-5 card">
+            <div class="row pt-2">
+                <h6>My Peer Id: <span id="mypeerid"></span></h6>
+            </div>
+            <div class="row mb-3">
+                <h6>Connect Status: <span class="text-success" id="status"></span></h6>
+            </div>
+
+            <div class="mb-3">
+                <input type="text" placeholder="Please Enter other peer id" class="form-control" id="peerid">
+                <br>
+                <button class="btn btn-outline-success" onclick="peerConnect()">connect</button>
+                <button class="btn btn-outline-primary" onclick="receivedCall()">Received Call</button>
+            </div>
+
+            <div class="row">
+                <video id="myVideo"></video>
+            </div>
+        </div>
+        <div class="col-md-7 card">
+            <video id="otherVideo">
+            </video>
+        </div>
+    </div>
+</div>
+
+
+<script src="js/jquery-3.6.0.min.js"></script>
+<script src="js/peerjs.min.js"></script>
+<script>
+
+    //STUN sever configuration
+    let MySTUNServer="stun:stun.l.google.com:19302";
+    let MyTurnServer="turn:numb.viagenie.ca";
+    let MyTurnUserName="jahid15-1499@diu.edu.bd";
+    let MyTurnPass="Jahid@1122";
+
+
+
+    let StunTurnConfig={
+        config:{
+            'iceServers':[
+                {urls: MySTUNServer},
+                {urls: MyTurnServer,credential:MyTurnPass, username: MyTurnUserName }
+            ]
+        }
+    }
+
+    //peer js initial
+    var peer = new Peer(StunTurnConfig);
+
+    // peer js connection
+    peer.on('open', function(id) {
+        $('#mypeerid').html(id);
+    });
+
+
+    //connection status
+    function peerConnect() {
+        let otherId = $('#peerid').val();
+        var conn = peer.connect(otherId);
+
+        document.getElementById("peerid").style.display = "none";
+        conn.on('open', function() {
+            $('#status').html("Successfully Connected");
+        });
+    }
+
+
+    //received call
+    function receivedCall() {
+
+        peer.on("call", function (call) {
+            const constraints = {
+                'video': true,
+                'audio': false
+            }
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    call.answer(stream);
+
+                    //My video preview
+                    let myVideo = document.getElementById('myVideo');
+                    myVideo.srcObject = stream;
+                    myVideo.play();
+
+                    ///Other video preview
+                    call.on('stream', function(remoteStream) {
+                        let otherVideo = document.getElementById('otherVideo');
+                        otherVideo.srcObject = remoteStream;
+                        otherVideo.play();
+                    });
+
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
+        })
+    }
+
+
+</script>
+</body>
+</html>
