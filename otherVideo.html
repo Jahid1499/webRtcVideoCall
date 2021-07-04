@@ -102,7 +102,7 @@
         peer.on("call", function (call) {
             const constraints = {
                 'video': true,
-                'audio': false
+                'audio': true
             }
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
